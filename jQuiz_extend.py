@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import random
+import unicodedata
 
 # uvoz slovarja
 from vocab import CATEGORIES
@@ -13,6 +14,26 @@ YELLOW = "\033[93m"
 RESET = "\033[0m"
 
 NUM_QUESTIONS = 20
+
+def normalize_answer(text: str) -> str:
+    """
+    Normalizira besedilo za primerjavo:
+    - pretvori v male črke
+    - odstrani naglase (é, è, ê, ñ, ô, …)
+    - odstrani začetne/končne presledke
+
+    Primer:
+        'PÂTÉ ' -> 'pate'
+    """
+    text = text.strip().lower()
+    # razdrobi znake na osnovno črko + diakritiko
+    decomposed = unicodedata.normalize("NFKD", text)
+    # pobriše diakritične znake (kombinirane)
+    without_accents = "".join(
+        ch for ch in decomposed
+        if not unicodedata.combining(ch)
+    )
+    return without_accents
 
 
 def read_with_default(prompt, default_value):
@@ -149,7 +170,7 @@ def run_game(target_language, question_language_mode, category_key, level):
         print(f"  Prevedi: '{question_word}'")
         user_answer = input("Tvoj odgovor: ").strip()
 
-        if user_answer.lower() == correct_answer.lower():
+        if normalize_answer(user_answer) == normalize_answer(correct_answer):
             score += 1
             print(GREEN + "Pravilno! 🎉" + RESET + " Pravilen odgovor je: " + correct_answer)
             print('\a', end='')  # vesel zvok (če ga terminal podpira)
@@ -186,4 +207,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
